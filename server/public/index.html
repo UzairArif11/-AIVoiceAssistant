@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Voice Assistant</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* INPUT SECTION - GUARANTEED VISIBLE */
+        .input-section {
+            background: #f0f8ff !important;
+            border: 3px solid #007bff !important;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 1000 !important;
+        }
+        
+        .input-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        
+        #questionInput {
+            width: 100% !important;
+            height: 100px !important;
+            padding: 15px !important;
+            font-size: 16px !important;
+            border: 2px solid #ddd !important;
+            border-radius: 8px !important;
+            resize: vertical !important;
+            box-sizing: border-box !important;
+            font-family: Arial, sans-serif !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: white !important;
+            color: black !important;
+        }
+        
+        #questionInput:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+        
+        .button-row {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        /* RESPONSE SECTION */
+        .response-section {
+            background: #fff8dc;
+            border: 3px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .response-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .response-status {
+            font-size: 14px;
+            padding: 5px 10px;
+            background: #d1ecf1;
+            color: #0c5460;
+            border-radius: 15px;
+        }
+        
+        #responseDisplay {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 80px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        /* VOICE CONTROLS */
+        .voice-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .voice-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .voice-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        /* MESSAGES */
+        .message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        /* CHAT HISTORY */
+        .chat-section {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        
+        .chat-message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .chat-message.assistant {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .chat-speaker {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .button-row, .voice-buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Voice Assistant</h1>
+        <div id="connectionStatus" class="status disconnected">🔴 Disconnected</div>
+        
+        <div id="errorMessage" class="message error"></div>
+        <div id="successMessage" class="message success"></div>
+        
+        <!-- INPUT SECTION - THIS WILL BE VISIBLE -->
+        <div class="input-section">
+            <div class="input-title">💬 Ask Your Question</div>
+            <textarea 
+                id="questionInput" 
+                placeholder="Type your question here... Example: 'What is artificial intelligence?' or 'Tell me a joke'"
+                disabled
+            ></textarea>
+            <div class="button-row">
+                <button id="sendBtn" class="btn-primary" disabled>📤 Send Question</button>
+                <button id="clearBtn" class="btn-secondary">🗑️ Clear</button>
+            </div>
+            <div class="button-row" style="margin-top: 10px;">
+                <button id="sampleBtn1" class="btn-success" disabled>❓ What is AI?</button>
+                <button id="sampleBtn2" class="btn-warning" disabled>😄 Tell me a joke</button>
+                <button id="sampleBtn3" class="btn-primary" disabled>💡 How does ML work?</button>
+            </div>
+        </div>
+        
+        <!-- RESPONSE SECTION -->
+        <div class="response-section">
+            <div class="response-title">
+                🤖 AI Response
+                <span id="responseStatus" class="response-status">Ready to help!</span>
+            </div>
+            <div id="responseDisplay">
+                👋 Hello! I'm your AI assistant. Type a question above and click "Send Question" to get started.
+                <br><br>
+                <strong>Example questions:</strong>
+                <ul>
+                    <li>"What is machine learning?"</li>
+                    <li>"Tell me a fun fact"</li>
+                    <li>"How do I learn programming?"</li>
+                    <li>"What's the weather like today?"</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- VOICE CONTROLS -->
+        <div class="voice-section">
+            <h3>🎤 Voice Controls</h3>
+            <div class="voice-buttons">
+                <button id="listenBtn" class="btn-success" disabled>🎤 Voice Input</button>
+                <button id="stopListenBtn" class="btn-danger" disabled style="display: none;">⏹️ Stop Listening</button>
+                <button id="speakBtn" class="btn-warning" disabled>🔊 Speak Response</button>
+            </div>
+        </div>
+        
+        <!-- CHAT HISTORY -->
+        <div class="chat-section">
+            <h4>💬 Conversation History</h4>
+            <div id="chatContainer">
+                <div class="chat-message assistant">
+                    <div class="chat-speaker">Assistant</div>
+                    <div>Welcome! I'm ready to help you with any questions.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; color: #666;">
+            <p>Powered by OpenRouter AI • Status: <span id="assistantStatus">Ready</span></p>
+            <p><strong>Server IP:</strong> 192.168.1.17:3001</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚀 AI Voice Assistant Starting...');
+        
+        class VoiceAssistant {
+            constructor() {
+                this.socket = null;
+                this.isConnected = false;
+                this.recognition = null;
+                this.synthesis = window.speechSynthesis;
+                this.isListening = false;
+                this.isSpeaking = false;
+                
+                this.initElements();
+                this.connectToServer();
+                this.setupEventListeners();
+                this.initSpeechRecognition();
+                
+                console.log('✅ Voice Assistant Initialized');
+            }
+
+            initElements() {
+                this.elements = {
+                    connectionStatus: document.getElementById('connectionStatus'),
+                    errorMessage: document.getElementById('errorMessage'),
+                    successMessage: document.getElementById('successMessage'),
+                    questionInput: document.getElementById('questionInput'),
+                    sendBtn: document.getElementById('sendBtn'),
+                    clearBtn: document.getElementById('clearBtn'),
+                    responseDisplay: document.getElementById('responseDisplay'),
+                    responseStatus: document.getElementById('responseStatus'),
+                    listenBtn: document.getElementById('listenBtn'),
+                    stopListenBtn: document.getElementById('stopListenBtn'),
+                    speakBtn: document.getElementById('speakBtn'),
+                    chatContainer: document.getElementById('chatContainer'),
+                    assistantStatus: document.getElementById('assistantStatus'),
+                    sampleBtn1: document.getElementById('sampleBtn1'),
+                    sampleBtn2: document.getElementById('sampleBtn2'),
+                    sampleBtn3: document.getElementById('sampleBtn3')
+                };
+                
+                console.log('📋 Elements initialized:', Object.keys(this.elements).length);
+            }
+
+            connectToServer() {
+                try {
+                    console.log('🔌 Connecting to server...');
+                    this.socket = io();
+
+                    this.socket.on('connect', () => {
+                        console.log('✅ Connected to server');
+                        this.isConnected = true;
+                        this.updateConnectionStatus('🟢 Connected', 'connected');
+                        this.updateUI();
+                        this.showMessage('Connected to AI server successfully!', 'success');
+                    });
+
+                    this.socket.on('disconnect', () => {
+                        console.log('❌ Disconnected from server');
+                        this.isConnected = false;
+                        this.updateConnectionStatus('🔴 Disconnected', 'disconnected');
+                        this.updateUI();
+                        this.showMessage('Disconnected from server', 'error');
+                    });
+
+                    this.socket.on('ai_response', (data) => {
+                        console.log('🤖 AI Response:', data.text);
+                        this.displayResponse(data.text);
+                        this.addToChat('assistant', data.text);
+                        this.setResponseStatus('Response received!');
+                        this.setAssistantStatus('Ready');
+                        
+                        // Auto-speak response
+                        setTimeout(() => {
+                            if (this.synthesis && !this.isSpeaking) {
+                                this.speakText(data.text);
+                            }
+                        }, 500);
+                    });
+
+                    this.socket.on('error', (error) => {
+                        console.error('❌ Socket error:', error);
+                        this.showMessage(`Connection error: ${error}`, 'error');
+                    });
+
+                } catch (error) {
+                    console.error('❌ Connection failed:', error);
+                    this.showMessage(`Failed to connect: ${error.message}`, 'error');
+                }
+            }
+
+            setupEventListeners() {
+                // Send button
+                this.elements.sendBtn.addEventListener('click', () => {
+                    const text = this.elements.questionInput.value.trim();
+                    if (text) {
+                        this.sendQuestion(text);
+                    }
+                });
+
+                // Enter key to send (Shift+Enter for new line)
+                this.elements.questionInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const text = this.elements.questionInput.value.trim();
+                        if (text) {
+                            this.sendQuestion(text);
+                        }
+                    }
+                });
+
+                // Clear button
+                this.elements.clearBtn.addEventListener('click', () => {
+                    this.clearAll();
+                });
+
+                // Voice buttons
+                this.elements.listenBtn.addEventListener('click', () => {
+                    this.startListening();
+                });
+
+                this.elements.stopListenBtn.addEventListener('click', () => {
+                    this.stopListening();
+                });
+
+                this.elements.speakBtn.addEventListener('click', () => {
+                    const response = this.getCurrentResponse();
+                    if (response) {
+                        this.speakText(response);
+                    } else {
+                        this.showMessage('No response to speak', 'error');
+                    }
+                });
+
+                // Sample question buttons
+                this.elements.sampleBtn1.addEventListener('click', () => {
+                    this.sendQuestion('What is artificial intelligence?');
+                });
+
+                this.elements.sampleBtn2.addEventListener('click', () => {
+                    this.sendQuestion('Tell me a joke');
+                });
+
+                this.elements.sampleBtn3.addEventListener('click', () => {
+                    this.sendQuestion('How does machine learning work?');
+                });
+
+                console.log('👂 Event listeners set up');
+            }
+
+            initSpeechRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'en-US';
+
+                    this.recognition.onstart = () => {
+                        console.log('🎤 Speech recognition started');
+                        this.isListening = true;
+                        this.updateUI();
+                        this.setResponseStatus('Listening...');
+                    };
+
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        console.log('🎤 Recognized:', transcript);
+                        this.elements.questionInput.value = transcript;
+                        this.sendQuestion(transcript);
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        console.error('🎤 Speech recognition error:', event.error);
+                        this.showMessage(`Speech recognition error: ${event.error}`, 'error');
+                        this.isListening = false;
+                        this.updateUI();
+                    };
+
+                    this.recognition.onend = () => {
+                        console.log('🎤 Speech recognition ended');
+                        this.isListening = false;
+                        this.updateUI();
+                    };
+
+                    console.log('🎤 Speech recognition initialized');
+                } else {
+                    console.warn('🎤 Speech recognition not supported');
+                    this.showMessage('Speech recognition not supported in this browser', 'error');
+                }
+            }
+
+            sendQuestion(text) {
+                if (!this.isConnected) {
+                    this.showMessage('Not connected to server', 'error');
+                    return;
+                }
+
+                console.log('📤 Sending question:', text);
+                this.addToChat('user', text);
+                this.setResponseStatus('Processing...');
+                this.setAssistantStatus('Thinking...');
+                this.displayResponse('🤔 Thinking about your question...');
+                this.elements.questionInput.value = '';
+
+                this.socket.emit('text_question', {
+                    text: text,
+                    timestamp: Date.now()
+                });
+            }
+
+            clearAll() {
+                this.elements.questionInput.value = '';
+                this.displayResponse(`
+                    👋 Hello! I'm your AI assistant. Type a question above and click "Send Question" to get started.
+                    <br><br>
+                    <strong>Example questions:</strong>
+                    <ul>
+                        <li>"What is machine learning?"</li>
+                        <li>"Tell me a fun fact"</li>
+                        <li>"How do I learn programming?"</li>
+                        <li>"What's the weather like today?"</li>
+                    </ul>
+                `);
+                this.setResponseStatus('Ready to help!');
+            }
+
+            displayResponse(text) {
+                this.elements.responseDisplay.innerHTML = `<div style="color: #333; line-height: 1.5;">${text}</div>`;
+            }
+
+            getCurrentResponse() {
+                const content = this.elements.responseDisplay.textContent;
+                return content && !content.includes('Example questions') ? content : null;
+            }
+
+            startListening() {
+                if (!this.recognition) {
+                    this.showMessage('Speech recognition not available', 'error');
+                    return;
+                }
+
+                if (!this.isConnected) {
+                    this.showMessage('Please connect to server first', 'error');
+                    return;
+                }
+
+                try {
+                    this.recognition.start();
+                } catch (error) {
+                    this.showMessage(`Failed to start listening: ${error.message}`, 'error');
+                }
+            }
+
+            stopListening() {
+                if (this.recognition && this.isListening) {
+                    this.recognition.stop();
+                }
+            }
+
+            speakText(text) {
+                if (!this.synthesis) {
+                    this.showMessage('Speech synthesis not available', 'error');
+                    return;
+                }
+
+                console.log('🔊 Speaking:', text);
+                this.synthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+
+                utterance.onstart = () => {
+                    this.isSpeaking = true;
+                    this.setAssistantStatus('Speaking...');
+                    this.setResponseStatus('Speaking response...');
+                    this.updateUI();
+                };
+
+                utterance.onend = () => {
+                    this.isSpeaking = false;
+                    this.setAssistantStatus('Ready');
+                    this.setResponseStatus('Ready to help!');
+                    this.updateUI();
+                };
+
+                this.synthesis.speak(utterance);
+            }
+
+            addToChat(speaker, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${speaker}`;
+                
+                const speakerDiv = document.createElement('div');
+                speakerDiv.className = 'chat-speaker';
+                speakerDiv.textContent = speaker === 'user' ? 'You' : 'Assistant';
+                
+                const textDiv = document.createElement('div');
+                textDiv.textContent = text;
+                
+                messageDiv.appendChild(speakerDiv);
+                messageDiv.appendChild(textDiv);
+                
+                this.elements.chatContainer.appendChild(messageDiv);
+                this.elements.chatContainer.scrollTop = this.elements.chatContainer.scrollHeight;
+            }
+
+            updateConnectionStatus(text, className) {
+                this.elements.connectionStatus.textContent = text;
+                this.elements.connectionStatus.className = `status ${className}`;
+            }
+
+            setResponseStatus(text) {
+                this.elements.responseStatus.textContent = text;
+            }
+
+            setAssistantStatus(text) {
+                this.elements.assistantStatus.textContent = text;
+            }
+
+            updateUI() {
+                const isActive = this.isConnected && !this.isSpeaking;
+                
+                // Ensure input elements are always visible
+                if (this.elements.questionInput) {
+                    this.elements.questionInput.disabled = !this.isConnected;
+                    this.elements.questionInput.style.display = 'block';
+                    this.elements.questionInput.style.visibility = 'visible';
+                    this.elements.questionInput.style.opacity = '1';
+                }
+                
+                if (this.elements.sendBtn) {
+                    this.elements.sendBtn.disabled = !this.isConnected;
+                    this.elements.sendBtn.style.display = 'inline-block';
+                    this.elements.sendBtn.style.visibility = 'visible';
+                    this.elements.sendBtn.style.opacity = '1';
+                }
+                
+                this.elements.listenBtn.disabled = !isActive || this.isListening;
+                this.elements.stopListenBtn.disabled = !this.isListening;
+                this.elements.speakBtn.disabled = !isActive;
+                
+                // Update sample buttons
+                this.elements.sampleBtn1.disabled = !this.isConnected;
+                this.elements.sampleBtn2.disabled = !this.isConnected;
+                this.elements.sampleBtn3.disabled = !this.isConnected;
+
+                this.elements.listenBtn.style.display = this.isListening ? 'none' : 'inline-block';
+                this.elements.stopListenBtn.style.display = this.isListening ? 'inline-block' : 'none';
+            }
+
+            showMessage(text, type) {
+                const element = type === 'error' ? this.elements.errorMessage : this.elements.successMessage;
+                const otherElement = type === 'error' ? this.elements.successMessage : this.elements.errorMessage;
+                
+                element.textContent = text;
+                element.style.display = 'block';
+                otherElement.style.display = 'none';
+                
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎬 Starting Voice Assistant...');
+            window.voiceAssistant = new VoiceAssistant();
+        });
+    </script>
+</body>
+</html>

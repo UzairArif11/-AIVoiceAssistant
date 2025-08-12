@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "AI Voice Assistant",
+    "slug": "ai-voice-assistant",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to the microphone to listen for voice commands.",
+        "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to AirPods for voice input/output.",
+        "NSBluetoothPeripheralUsageDescription": "This app uses Bluetooth to connect to AirPods for voice input/output.",
+        "UIBackgroundModes": [
+          "audio",
+          "background-fetch",
+          "background-processing"
+        ]
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ],
+      "package": "com.aivoiceassistant.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 21
+          }
+        }
+      ],
+      "expo-audio"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "90bf8472-a092-41ae-863d-c96a6b6f57e8"
+      }
+    }
+  }
+}

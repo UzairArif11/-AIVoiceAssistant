@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .response {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            min-height: 50px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 AI Assistant Test</h1>
+        
+        <div id="connectionStatus" class="status disconnected">🔴 Disconnected</div>
+        
+        <div class="input-group">
+            <label for="questionInput">Ask a Question:</label>
+            <textarea 
+                id="questionInput" 
+                placeholder="Type your question here... (e.g., 'What is AI?', 'Tell me a joke', 'How does machine learning work?')"
+                rows="3"
+            ></textarea>
+        </div>
+        
+        <button id="sendBtn" disabled>📤 Send Question</button>
+        <button id="clearBtn">🗑️ Clear</button>
+        
+        <div class="response">
+            <h3>AI Response:</h3>
+            <div id="responseDisplay">Ready to answer your questions!</div>
+        </div>
+        
+        <div class="input-group">
+            <h3>Test Buttons:</h3>
+            <button id="testBtn">🧪 Send Test Message</button>
+            <button id="sampleBtn1">❓ What is artificial intelligence?</button>
+            <button id="sampleBtn2">😄 Tell me a joke</button>
+            <button id="sampleBtn3">💡 How does machine learning work?</button>
+        </div>
+        
+        <div class="log">
+            <h4>Debug Log:</h4>
+            <div id="logDisplay">Initializing...</div>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let isConnected = false;
+
+        // Get DOM elements
+        const elements = {
+            connectionStatus: document.getElementById('connectionStatus'),
+            questionInput: document.getElementById('questionInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            clearBtn: document.getElementById('clearBtn'),
+            responseDisplay: document.getElementById('responseDisplay'),
+            testBtn: document.getElementById('testBtn'),
+            sampleBtn1: document.getElementById('sampleBtn1'),
+            sampleBtn2: document.getElementById('sampleBtn2'),
+            sampleBtn3: document.getElementById('sampleBtn3'),
+            logDisplay: document.getElementById('logDisplay')
+        };
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            elements.logDisplay.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            elements.logDisplay.scrollTop = elements.logDisplay.scrollHeight;
+            console.log(message);
+        }
+
+        function updateConnectionStatus(text, className) {
+            elements.connectionStatus.textContent = text;
+            elements.connectionStatus.className = `status ${className}`;
+        }
+
+        function updateUI() {
+            elements.questionInput.disabled = !isConnected;
+            elements.sendBtn.disabled = !isConnected;
+            elements.testBtn.disabled = !isConnected;
+            elements.sampleBtn1.disabled = !isConnected;
+            elements.sampleBtn2.disabled = !isConnected;
+            elements.sampleBtn3.disabled = !isConnected;
+        }
+
+        function sendQuestion(text) {
+            if (!isConnected || !text.trim()) return;
+            
+            log(`Sending question: "${text}"`);
+            elements.responseDisplay.textContent = "🤔 Thinking...";
+            
+            socket.emit('text_question', {
+                text: text,
+                timestamp: Date.now()
+            });
+            
+            elements.questionInput.value = '';
+        }
+
+        function sendTestMessage() {
+            if (!isConnected) return;
+            
+            log("Sending test message...");
+            elements.responseDisplay.textContent = "📡 Sending test...";
+            
+            socket.emit('test_message', {
+                text: 'Hello from test page!',
+                timestamp: Date.now()
+            });
+        }
+
+        // Initialize connection
+        function connect() {
+            log("Connecting to server...");
+            socket = io();
+
+            socket.on('connect', () => {
+                log("✅ Connected to server");
+                isConnected = true;
+                updateConnectionStatus('🟢 Connected', 'connected');
+                updateUI();
+            });
+
+            socket.on('disconnect', () => {
+                log("❌ Disconnected from server");
+                isConnected = false;
+                updateConnectionStatus('🔴 Disconnected', 'disconnected');
+                updateUI();
+            });
+
+            socket.on('ai_response', (data) => {
+                log(`🤖 AI Response received: "${data.text}"`);
+                elements.responseDisplay.textContent = data.text;
+            });
+
+            socket.on('transcription', (data) => {
+                log(`📝 Transcription: "${data.text}"`);
+            });
+
+            socket.on('error', (error) => {
+                log(`❌ Socket error: ${error}`);
+            });
+        }
+
+        // Event listeners
+        elements.sendBtn.addEventListener('click', () => {
+            sendQuestion(elements.questionInput.value);
+        });
+
+        elements.questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuestion(elements.questionInput.value);
+            }
+        });
+
+        elements.clearBtn.addEventListener('click', () => {
+            elements.questionInput.value = '';
+            elements.responseDisplay.textContent = 'Ready to answer your questions!';
+            log("🗑️ Cleared input and response");
+        });
+
+        elements.testBtn.addEventListener('click', sendTestMessage);
+        
+        elements.sampleBtn1.addEventListener('click', () => {
+            sendQuestion("What is artificial intelligence?");
+        });
+        
+        elements.sampleBtn2.addEventListener('click', () => {
+            sendQuestion("Tell me a joke");
+        });
+        
+        elements.sampleBtn3.addEventListener('click', () => {
+            sendQuestion("How does machine learning work?");
+        });
+
+        // Start the application
+        log("🚀 Starting AI Assistant Test...");
+        connect();
+        updateUI();
+    </script>
+</body>
+</html>
