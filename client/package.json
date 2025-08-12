@@ -1,0 +1,30 @@
+{
+  "name": "ai-voice-assistant-client",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
+    "expo": "~53.0.0",
+    "expo-av": "^15.1.7",
+    "expo-speech": "^13.1.7",
+    "expo-status-bar": "~2.2.3",
+    "expo-build-properties": "~0.14.8",
+    "expo-dev-client": "~5.2.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-web": "^0.20.0",
+    "socket.io-client": "^4.7.4",
+    "expo-audio": "~0.4.8"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2"
+  },
+  "private": true
+}

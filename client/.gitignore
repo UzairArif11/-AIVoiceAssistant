@@ -1,0 +1,190 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# React Native
+.react-native/
+
+# Metro
+.metro-health-check*
+
+# Build artifacts
+*.apk
+*.ipa
+*.app
+*.aab
+build/
+android/app/build/
+ios/build/
+ios/DerivedData/
+
+# Debug files
+*.dSYM.zip
+*.dSYM
+
+# Bundle artifacts
+*.jsbundle
+*.bundle
+
+# CocoaPods (iOS)
+ios/Pods/
+ios/Podfile.lock
+
+# Gradle (Android)
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+*.keystore
+!debug.keystore
+
+# Flipper
+ios/Flipper-Folly
+
+# Xcode (iOS)
+ios/*.xcworkspace
+ios/*.xcuserdata
+ios/project.xcworkspace/
+ios/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+ios/.xcode.env.local
+
+# Android Studio
+.idea/
+.gradle/
+local.properties
+*.iml
+.externalNativeBuild
+.cxx/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettier-cache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Temporary folders
+tmp/
+temp/
+
+# Operating System Files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# Editors
+*~
+*.swp
+*.swo
+.#*
+\#*#
+
+# Fastlane
+ios/fastlane/report.xml
+ios/fastlane/Preview.html
+ios/fastlane/screenshots
+ios/fastlane/test_output
+android/fastlane/report.xml
+android/fastlane/Preview.html
+android/fastlane/screenshots
+android/fastlane/test_output
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+
+# Sentry
+.sentryclirc
+
+# Watchman
+.watchmanconfig
+
+# Buck
+buck-out/
+\.buckd/
+*.keystore
+!debug.keystore
+
+# Ruby (if using Ruby for fastlane, etc.)
+vendor/bundle/
+
+# Misc
+*.orig
+*.log
+*.sqlite
+*.db
+
+# Testing
+__tests__/coverage/
+jest/
+.jest/ 
